@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "0.0.0.0:8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    volumes:
+      - ./backend/models:/app/models
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://192.168.29.91:8000
+    ports:
+      - "0.0.0.0:3000:3000"
+    depends_on:
+      - backend
