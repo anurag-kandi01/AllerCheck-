@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { Camera, RefreshCw } from 'lucide-react';
+import { Camera, RefreshCw, X } from 'lucide-react';
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
@@ -23,11 +23,7 @@ const CameraCapture: FC<CameraCaptureProps> = ({ onCapture, onCancel }) => {
           videoRef.current.srcObject = mediaStream;
         }
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError('Could not access camera: ' + err.message);
-        } else {
-          setError('Could not access camera');
-        }
+        setError(err instanceof Error ? 'Could not access camera: ' + err.message : 'Could not access camera');
       }
     };
 
@@ -67,40 +63,48 @@ const CameraCapture: FC<CameraCaptureProps> = ({ onCapture, onCancel }) => {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError('Could not access camera: ' + err.message);
-      } else {
-        setError('Could not access camera');
-      }
+      setError(err instanceof Error ? 'Could not access camera: ' + err.message : 'Could not access camera');
     }
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg shadow-inner w-full transition-colors duration-200">
+    <div className="flex flex-col items-center gap-4 w-full">
       {error ? (
-        <div className="text-center text-red-600 dark:text-red-400 p-4">
-          <p>{error}</p>
-          <button onClick={retry} className="mt-4 flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-700 px-4 py-2 rounded text-slate-800 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors mx-auto">
-            <RefreshCw size={16} /> Retry
+        <div className="text-center p-6 glass rounded-xl border border-red-500/20 w-full">
+          <p className="text-red-400 text-sm mb-4">{error}</p>
+          <button
+            onClick={retry}
+            className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-xl text-slate-300 text-sm transition-all mx-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Retry Camera
           </button>
         </div>
       ) : (
-        <div className="relative w-full max-w-sm rounded-lg overflow-hidden bg-black aspect-video shadow-md border border-slate-300 dark:border-slate-700">
+        <div className="relative w-full max-w-sm rounded-xl overflow-hidden bg-black aspect-video border border-white/10 shadow-xl">
           <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          <div className="absolute inset-0 border-2 border-cyan-400/20 rounded-xl pointer-events-none" />
+          {/* Corner markers */}
+          <div className="absolute top-3 left-3 w-5 h-5 border-l-2 border-t-2 border-cyan-400/60 rounded-tl" />
+          <div className="absolute top-3 right-3 w-5 h-5 border-r-2 border-t-2 border-cyan-400/60 rounded-tr" />
+          <div className="absolute bottom-3 left-3 w-5 h-5 border-l-2 border-b-2 border-cyan-400/60 rounded-bl" />
+          <div className="absolute bottom-3 right-3 w-5 h-5 border-r-2 border-b-2 border-cyan-400/60 rounded-br" />
         </div>
       )}
-      <div className="flex gap-4 mt-2">
+      <div className="flex gap-3">
         <button
           onClick={capture}
           disabled={!!error || !stream}
-          className="flex items-center gap-2 bg-teal-600 dark:bg-teal-500 text-white px-6 py-2 rounded-full font-medium hover:bg-teal-700 dark:hover:bg-teal-600 disabled:opacity-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-6 py-2.5 rounded-xl font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-lg shadow-cyan-500/20 text-sm"
         >
-          <Camera size={20} /> Capture
+          <Camera className="w-4 h-4" />
+          Capture
         </button>
         <button
           onClick={onCancel}
-          className="px-6 py-2 rounded-full font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors shadow-sm border border-slate-200 dark:border-slate-600"
+          className="flex items-center gap-2 px-5 py-2.5 glass border border-white/10 hover:border-white/20 rounded-xl text-slate-400 hover:text-white text-sm transition-all"
         >
+          <X className="w-4 h-4" />
           Cancel
         </button>
       </div>

@@ -1,11 +1,12 @@
 import logging
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 import traceback
 
 from ml_model import load_model, predict_image
-from gemini_client import get_explanation
+from gemini_client import get_explanation, get_chat_response, get_allergy_prediction, GeminiUnavailableError
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -94,3 +95,40 @@ async def analyze(image: UploadFile = File(...)):
     
     logger.info("Analysis completed successfully.")
     return response
+
+class ChatRequest(BaseModel):
+    message: str
+
+@app.post("/chat")
+async def chat(request: ChatRequest):
+    logger.info(f"/chat called with message length: {len(request.message)}")
+    try:
+        reply = await get_chat_response(request.message)
+        return {"reply": reply}
+    except GeminiUnavailableError as e:
+        logger.warning(f"Gemini unavailable for chat: {e}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        raise HTTPException(status_code=500, detail="Chat service temporarily unavailable.")
+
+class AllergyRequest(BaseModel):
+    symptoms: str
+    exposure_context: str = ""
+    triggers: str = ""
+
+@app.post("/predict-allergy")
+async def predict_allergy(request: AllergyRequest):
+    logger.info(f"/predict-allergy called with symptoms: {request.symptoms[:60]}...")
+    if not request.symptoms.strip():
+        raise HTTPException(status_code=400, detail="Please provide observable symptoms.")
+    try:
+        result = await get_allergy_prediction(
+            request.symptoms,
+            request.exposure_context,
+            request.triggers
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Allergy prediction error: {e}")
+        raise HTTPException(status_code=500, detail="Allergy prediction service temporarily unavailable.")
